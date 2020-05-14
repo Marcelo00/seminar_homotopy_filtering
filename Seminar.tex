@@ -1,0 +1,208 @@
+\documentclass[a4paper]{IEEEtran}
+
+% Ein paar hilfreiche Pakete
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+% Nummeriere Formel nur, wenn sie auch referenziert wird
+\mathtoolsset{showonlyrefs}
+
+% Header
+\markboth{Seminar SS 2020 Moderne Methoden der Informationsverarbeitung}{Seminar SS 2020 Moderne Methoden der Informationsverarbeitung}
+
+% Hier den Titel des eigenen Seminars eintragen
+\title{Nonlinear Filtering with Homotopy Continuation}
+
+% Hier deinen eigenen Namen
+\author{Marcel~Hiltscher}
+
+
+\begin{document}
+
+% Erzeugt die Überschrift
+\maketitle
+
+% Zusammenfassung
+\begin{abstract}
+Non-linear filtering with use of ordinary differential equation.
+\end{abstract}
+
+% Erster Abschnitt
+\section{Introduction}
+\label{ch:intro}
+
+The task of state estimation based on a given system emerges in a variety of fields such as tracking, computer vision, robotics or navigation.
+In many cases these systems have a dynamic property. Consequently, the states can not be directly observed due to physical limitation. In order to 
+circumvent this problem, noisy measurements are being taken from the system and used for the state estimation. 
+
+In order to estimate states in a dynamic systems, the corresponding system and measurement model are used for the necessary inference. A system model describes the relation of the state changes where as the measurement
+model connects the state and the measurement.
+
+The general approach of state estimation leverages all information available and proceeds in two steps:
+\begin{enumerate}
+    \item prediction using the state model
+    \item measurement update or filter step using the measurement model
+\end{enumerate}
+
+First, the prediction step is concerned with the state estimation before a new measurement is obtained. Thus, the estimation is based on previous measurements and system inputs.
+In Bayesian terms, the resulting estimate is the so called priori estimate. Next, we include the new measurement in order to update our estimation which leads to the posterior estimate. 
+Theses estimates can be specified as a probability densities conditioned on the measurements and the system inputs in the former case.
+
+Including all measurement and input information at every estimation cycle is not computational beneficial. Thus, a recursive approach that sequentially leverages the current information is preferred.
+
+An additional property of systems is the linearity or non-linearity which respectively leads to different strategies regarding the previous mentioned estimation procedure.
+In the linear case, the well known Kalman Filter \cite{Kalman1960} leads to an optimal solution for the estimation problem and includes a recursive approach. However, the non-linearity of a system
+impede a closed form solution of the priori and posterior distribution. The reasons for this ist that the calculation of the respective probability density is computational infeasible and in the worst case not
+possible. Thus, an approximation of the respective estimates is necessary. Typical examples for approaching this problem are the Unscented Kalman Filter (UKF) \cite{julier2004} or the Extended Kalman Filter (EKF) \cite{jazwinski2007}.
+
+Next to the Kalman based filters, many other approaches are introduced in scientific research \cite{daum2005}. A broad field of recursive methods are particle filters approximating the density by weighted samples or rather particles \cite{arulampalam2002}, \cite{crisan2002}. 
+The sampling follows different paradigm like the importance sampling or sequential Monte Carlo \cite{cappe2007b}. The advantage of such filters is that they do not depend the posterior to be closely approximated by a gaussian distribution \cite{cappe2007b} like the 
+case in the UKF.
+
+Beside the particle filter, the use of homotopy continuation methods is a further field of non-linear state estimation. The core idea is to gradually approximate the desired density by a given initial density via a homotopy. 
+It allows for the posterior density to have the same parameterization class as the prior density which is a positive effect because the posterior is used for the calculation of the prior distribution \cite{hagmar2011}. 
+The use of homotopy progressive methods are introduced in \cite{hanebeck2003} and \cite{daum2005}. However, the latter combines it with particle flow where as the former introduce a more general approach to non-linear state estimation.
+
+The focus of this seminar are homotopy based filters in a non-linear setting. Section \ref{ch:problem_formulation} will formerly define the foundation of the estimation problem followed by the general approach of
+homotopy based filtering in section \ref{ch:homotopy_continuation}. Next, Section \ref{ch:homotopy_particle_filter} will exemplary present the intersection of homotopy and particle filter and lastly, section \ref{ch:conclusion} will draw a conclusion.
+
+
+\section{Problem Formulation}
+\label{ch:problem_formulation}
+
+The estimation of a state depends on the underlying structure of the non-linear system and measurement model. A general definition for discrete-time models is given by
+
+\begin{align}
+    \underline{x}_{k+1}  &= \underline{a}_{k}(\underline{x}_{k}, \hat{u}_{k},  \underline{w}_{k}) \,,  \label{eq:system_model} \\
+    \underline{y}_{k}    &= \underline{h}_{k}(\underline{x}_{k}, \underline{v}_{k}) \,, \label{eq:measurement_model}
+\end{align}
+
+where equation \eqref{eq:system_model} defines the system model where as equation \eqref{eq:measurement_model} defines the measurement model. In equation \eqref{eq:system_model}, 
+the $\underline{a}_{k}$ describes the non-linear relation of state vector $\underline{x}_{k}$ and the system input $\hat{u}_{k}$ with regard to the state vector in the next time step - $\underline{x}_{k+1}$.
+System disturbances are modelled by a random vector $\underline{w}_{k}$ with a density of $f^{w}_{k}(w_{k})$. With respect to the state vector $\underline{x}_{k}$ and the measurement vector $\underline{y}_{k}$,
+the non-linear relation is given by $\underline{h}_{k}$. The measurement noise is stated as a random vector $\underline{v}_{k}$ Including its corresponding density $f^{v}_{k}(v_{k})$. Additionally, let $k$ donates a discrete time stamp.
+For $\underline{w}_{k}$ and $\underline{v}_{k}$ a white noise assumption is used.
+
+Based on the equations above, the probability density of the new state, called transition probability, and the probability density for the measurement, refereed to as the likelihood probability, are defined as:
+\begin{align}
+    \underline{x}_{k+1} &\sim p(\underline{x}_{k+1} \vert \underline{x}_{k}, \hat{u}_{k}) \,, \label{eq:tarnsition_prob} \\
+    \underline{y}_{k} &\sim p(\underline{y}_{k} \vert \underline{x}_{k}) \,. \label{eq:likelihood_prob}
+\end{align}
+For simplicity reasons, the $\hat{u}_{k}$ in \eqref{eq:tarnsition_prob} is omitted which leads to $p(\underline{x}_{k+1} \vert \underline{x}_{k})$.
+
+According to the probabilities outlined above, the two steps of a state estimation can be formulated. 
+Firstly, the first order markov property for the state transition is assumed. The markov property states that the current state vector only depends on the last state vector 
+$p(\underline{x}_{k+1} \vert \underline{x}_{0:k}) = p(\underline{x}_{k+1} \vert \underline{x}_{k})$ with $\underline{x}_{0:k} := \{\underline{x}_{0}, \dotsc, \underline{x}_{k}\}$.
+Furthermore, let $Y_{k}$ donate a set of measurements from time one up to k $\underline{Y}_{k} := \{\underline{y}_{1}, \dotsc , \underline{y}_{k}\}$.
+
+The prediction is stated as
+\begin{equation}
+    \begin{split}
+        p(\underline{x}_{k+1} \vert \underline{Y}_{k}) &= \int p(\underline{x}_{k+1}, \underline{x}_{k} \vert \underline{Y}_{k}) \mathrm{d}\underline{x}_{k} \\
+        &= \int p(\underline{x}_{k+1} \vert \underline{x}_{k})p(\underline{x}_{k} \vert Y_{k})\mathrm{d}\underline{x}_{k} \,,
+    \end{split}
+    \label{eq:prior_gen_density}
+\end{equation}
+and is referred to as the prior density. It combines the transition density \eqref{eq:tarnsition_prob} and the previous measurements.
+On the contrary, a recursive measurement update can be derived with help of Bayes' theorem resulting in the desired posterior density:
+\begin{equation}
+    \begin{split}
+        p(\underline{x}_{k+1} \vert \underline{Y}_{k+1}) &= p(\underline{x}_{k+1} \vert \underline{Y}_{k}, \underline{y}_{k+1}) \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1}, \underline{Y}_{k})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1}) p(\underline{x}_{k+1} \vert \underline{Y}_{k})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \,.  
+        \label{eq:posterior_gen_density}
+    \end{split}
+\end{equation}
+The numerator of the the posterior density combines the likelihood \eqref{eq:likelihood_prob} with the 
+prior density \eqref{eq:prior_gen_density} where the denominator only functions as a normalization factor.
+The denominator of the posterior density \eqref{eq:posterior_gen_density} can be left out which simplifies the expression to 
+$ p(\underline{x}_{k+1} \vert \underline{Y}_{k+1}) \approx p(\underline{y}_{k+1} \vert \underline{x}_{k+1}) p(\underline{x}_{k+1} \vert \underline{Y}_{k})$.
+
+Assuming the models \eqref{eq:system_model} and \eqref{eq:measurement_model} to be a probabilistic model, the equations \eqref{eq:prior_gen_density} and \eqref{eq:posterior_gen_density}
+can be rewritten to
+\begin{align}
+    f^{p}_{k+1}(\underline{x}_{k+1} \vert  \underline{Y}_{k}) &= \int f^{T}_{k+1}(\underline{x}_{k+1} \vert \underline{x}_{k})f^{e}_{k}(\underline{x}_{k} \vert Y_{k})\mathrm{d}\underline{x}_{k} \label{eq:prior_prob_density} \\
+    \begin{split}
+        f^e_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k+1})  &=  \dfrac{f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k})}{f(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= c \, f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k}) \\
+        &\approx f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k})    \,. \label{eq:posterior_prob_density}
+    \end{split}
+\end{align}    
+For an easier notation, the prior density \eqref{eq:prior_prob_density} is abbreviated to $f^{p}_{k+1}(\underline{x}_{k+1})$ and the posterior density \eqref{eq:posterior_prob_density} to $f^e_{k+1}(\underline{x}_{k+1})$. 
+Furthermore, the transitional density and the likelihood can also be reduced to $f^{T}_{k+1}(\underline{x}_{k+1})$ and $f^{L}_{k+1}(\underline{x}_{k+1})$.
+
+As stated in section \ref{ch:intro} a closed form solution of the prior and posterior density is generally not possible except in few special cases - e.g. additive gaussian noise with initial gaussian distribution. Thus, an approximation for the 
+respective densities is needed. 
+
+In the following chapters, an approximation of a true density $\tilde{f}$ is given by $f$. Additionally, the formulations are given for specific $k$th measurement update or rather filter step. The goal now is to find an approximation of $\tilde{f}^e(\underline{x})$ 
+denoted as $f^e(\underline{x})$. Keep in mind that the recursive filtering demand an re-approximation after each filtering step because the type of the density may change. 
+
+One method is to use a measure of deviation $G(\underline{\theta})$ between the approximation probability density 
+$f^e(\underline{x}, \underline{\theta})$ - e.g. Gaussian Mixtures - and the desired true posterior $\tilde{f^{e}(\underline{x})}$. In order to get a good approximation, one need to minimize the deviation measure with respect to the 
+parameter vector $\underline{\theta}$. Though, numerical solution of the optimization problem may lead to local minima which in return does not ensure an optimal parameter for the 
+approximation density $f^e(\underline{x}, \underline{\theta})$. 
+
+
+\section{Non-linear Filtering with Homotopy Continuation}
+\label{ch:homotopy_continuation}
+
+Homotopy continuation or short homotopy is a mathematical concept originated from topology and differential geometry. A homotopy can be used to continuously deform a function to a different function. For example, the use of a homotopy allows to continuously deform a
+circle to a an ellipse \cite{liao2012}. In the case of density approximation, one can use a homotopy to gradually transform the prior into the posterior instead of directly approximate the posterior which circumvent the problem of local minima. Approaching the filtering problem 
+with homotopy is also called progressive filtering \cite{hanebeck2003}, \cite{hanebeck2012a}. Additionally, homotopies are applied in different use cases such as obtaining optimal posterior parameters \cite{hagmar2011} or filtering in polynomial systems \cite{huber}.
+
+In section \ref{ch:math_background_homotopy} the mathematical side is shortly introduced which is then followed by the general idea of using a homotopy for the purpose of filtering \ref{ch:general_idea_homotopy}. 
+Lastly, section \ref{ch:homotopy_filtering} will derive the measurement update with the use of a homotopy.
+
+\subsection{Mathematical background}
+\label{ch:math_background_homotopy}
+The mathematical definition for a homotopy is a continuous function $H:X \times [0,1] \rightarrow Y$ mapping a function $f(x)$ from the topological space $X$ to the function $g(x)$ from topological space $Y$ in such way 
+that $H(x,0)=g(x)$ and $H(x,1)=f(x)$ \cite{liao2012}. 
+
+For example, let the function $f(x)=g(x)l(x)$ which is, in context of filtering, the  posterior. By using the homotopy $H(x, \lambda) = g(x)l(x)^{\lambda}$ the prior
+$g(x)$ is gradually transformed to the posterior. With $\lambda = 0$ the homotopy reduces to the prior where as $\lambda = 1$, the homotopy is equal to the posterior \cite{daum2007}. The parameter $\lambda$ is also called the homotopy-parameter \cite{liao2012}.
+
+Based on the example above, the advantage of using a homotopy is that given the known prior $H(x,0)=g(x)$, the continuously deformation of $g(x)$ by increasing the parameter $\lambda$ 
+results in the desired posterior $f(x)$. 
+
+\subsection{General Procedure}
+\label{ch:general_idea_homotopy}
+The general procedure of using homotopy for the approximation of the posterior follows four steps \cite{hanebeck2003}:
+\begin{enumerate}
+    \item Formulate a homotopy $\tilde{f^e}(\underline{x},\lambda)$ which is a parameterized version of the true density $\tilde{f}^{e}(\underline{x})$. As in the section of the mathematical background \ref{ch:math_background_homotopy}
+    the homotopy-parameter $\lambda$ handles the progression between a starting density - $\lambda = 0$ - and the posterior $\tilde{f}^e(\underline{x})$ in case for $\lambda = 1$.
+    \item Define a density $f^e(\underline{x}, \underline{\theta})$ with a $\lambda$ dependent parameter vector $\underline{\theta}$ which will approximate $\tilde{f^e}(\underline{x},\lambda)$
+    \item Define a measure of deviation $G(\underline{\theta}, \lambda)$ between $f^e(\underline{x}, \underline{\theta})$ and $\tilde{f^e}(\underline{x},\lambda)$
+    \item An ordinary differential equation (ODE) is derived in order to calculate the parameter $\underline{\theta}(\lambda)$:
+    \begin{equation}
+        \underline{b}(\underline{\theta}, \lambda) = \textbf{A}\underline{\dot{\theta}}(\lambda)
+    \end{equation}
+\end{enumerate}
+
+As $\lambda$ approaches $1$, the solution of the ODE provides the optimal parameters for the density $f^e(\underline{x}, \underline{\theta})$ and thus, an optimal approximation of $\tilde{f}(\underline{x})$ is found.
+
+\subsection{Approximation of the Posterior Density}
+\label{ch:homotopy_approximation}
+
+\section{Homotopy Continuation and particle Filter}
+\label{ch:homotopy_particle_filter}
+
+
+\section{Conclusion}
+\label{ch:conclusion}
+\begin{itemize}
+    \item Compare findings of different methods
+\end{itemize}
+
+
+% Literaturverzeichnis in Literatur.bib
+% (z.B. per Hand oder mit Zotero, Jabref, etc. editieren) 
+\bibliographystyle{plain}
+\bibliography{Literatur}
+\end{document}
