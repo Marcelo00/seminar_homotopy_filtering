@@ -52,7 +52,8 @@ The general approach of state estimation leverages all information available and
 
 First, the prediction step is concerned with the state estimation before a new measurement is obtained. Thus, the estimation is based on previous measurements and system inputs.
 In Bayesian terms, the resulting estimate is the so called priori estimate. Next, we include the new measurement in order to update our estimation which leads to the posterior estimate. 
-Theses estimates can be specified as a probability densities conditioned on the measurements and the system inputs in the former case.
+Afterwards, the posterior is used to calculate the prior for the next time stamp and the procedure starts from the beginning. Theses estimates can be specified as a probability densities conditioned 
+on the measurements and the system inputs in the former case.
 
 Including all measurement and input information at every estimation cycle is not computational beneficial. Thus, a recursive approach that sequentially leverages the current information is preferred.
 
@@ -145,7 +146,7 @@ In the following chapters, an approximation of a true density $\tilde{f}$ is giv
 denoted as $f^e(\underline{x})$. Keep in mind that the recursive filtering demand an re-approximation after each filtering step because the type of the density may change. 
 
 One method is to use a measure of deviation $G(\underline{\theta})$ between the approximation probability density 
-$f^e(\underline{x}, \underline{\theta})$ - e.g. Gaussian Mixtures - and the desired true posterior $\tilde{f^{e}(\underline{x})}$. In order to get a good approximation, one need to minimize the deviation measure with respect to the 
+$f^e(\underline{x}, \underline{\theta})$ - e.g. Gaussian Mixtures - and the desired true posterior $\tilde{f}^{e}(\underline{x})$. In order to get a good approximation, one need to minimize the deviation measure with respect to the 
 parameter vector $\underline{\theta}$. Though, numerical solution of the optimization problem may lead to local minima which in return does not ensure an optimal parameter for the 
 approximation density $f^e(\underline{x}, \underline{\theta})$. 
 
@@ -158,14 +159,14 @@ circle to a an ellipse \cite{liao2012}. In the case of density approximation, on
 with homotopy is also called progressive filtering \cite{hanebeck2003}, \cite{hanebeck2012a}. Additionally, homotopies are applied in different use cases such as obtaining optimal posterior parameters \cite{hagmar2011} or filtering in polynomial systems \cite{huber}.
 
 In section \ref{ch:math_background_homotopy} the mathematical side is shortly introduced which is then followed by the general idea of using a homotopy for the purpose of filtering \ref{ch:general_idea_homotopy}. 
-Lastly, section \ref{ch:homotopy_filtering} will derive the measurement update with the use of a homotopy.
+Lastly, section \ref{ch:approx_posterior_homotopy} will derive the measurement update with the use of a homotopy.
 
 \subsection{Mathematical background}
 \label{ch:math_background_homotopy}
 The mathematical definition for a homotopy is a continuous function $H:X \times [0,1] \rightarrow Y$ mapping a function $f(x)$ from the topological space $X$ to the function $g(x)$ from topological space $Y$ in such way 
 that $H(x,0)=g(x)$ and $H(x,1)=f(x)$ \cite{liao2012}. 
 
-For example, let the function $f(x)=g(x)l(x)$ which is, in context of filtering, the  posterior. By using the homotopy $H(x, \lambda) = g(x)l(x)^{\lambda}$ the prior
+For example, let the function be $f(x)=g(x)l(x)$ - the posterior in filtering context. By using the homotopy $H(x, \lambda) = g(x)l(x)^{\lambda}$ the prior
 $g(x)$ is gradually transformed to the posterior. With $\lambda = 0$ the homotopy reduces to the prior where as $\lambda = 1$, the homotopy is equal to the posterior \cite{daum2007}. The parameter $\lambda$ is also called the homotopy-parameter \cite{liao2012}.
 
 Based on the example above, the advantage of using a homotopy is that given the known prior $H(x,0)=g(x)$, the continuously deformation of $g(x)$ by increasing the parameter $\lambda$ 
@@ -182,14 +183,54 @@ The general procedure of using homotopy for the approximation of the posterior f
     \item An ordinary differential equation (ODE) is derived in order to calculate the parameter $\underline{\theta}(\lambda)$:
     \begin{equation}
         \underline{b}(\underline{\theta}, \lambda) = \textbf{A}\underline{\dot{\theta}}(\lambda)
+        \label{eq:ode_general}
     \end{equation}
 \end{enumerate}
 
-As $\lambda$ approaches $1$, the solution of the ODE provides the optimal parameters for the density $f^e(\underline{x}, \underline{\theta})$ and thus, an optimal approximation of $\tilde{f}(\underline{x})$ is found.
+As $\lambda$ approaches $1$, the solution of the ODE \eqref{eq:ode_general} provides the optimal parameter $\underline{\lambda}$ for the density $\tilde{f}^e(\underline{x}, \underline{\theta})$ and thus, an optimal approximation of $\tilde{f}(\underline{x})$ is found. The concrete result of the steps 
+described may vary depending on the chosen densities and deviation measures.
 
-\subsection{Approximation of the Posterior Density}
+\subsection{Approximation of the Posterior Density via Homotopy}
+\label{ch:approx_posterior_homotopy}
+ The first step in the approximation of the posterior density is the formulation of a homotopy $\tilde{f^e}(\underline{x},\lambda)$. 
+ Its properties with regard to the $\lambda$-parameter are firstly,  $f^e(\underline{x}, 0) = g(\underline{x})$ and secondly, $\tilde{f}^e(\underline{x}, 1) = \tilde{f}^{e}(\underline{x}) \approx  f^{L}(\underline{x}) f^{p}(\underline{x})$.
+ With respect to the choice of $g(x)$, different approaches are feasible . \cite{hanebeck2003} states that $g(\underline{x})$ is an arbitrary chosen and easy approximable density. On the contrary, \cite{hagmar2011} specifies $g(\underline{x})$ to be the prior
+ $f^p(\underline{x})$. The advantage for using the prior density as $g(\underline{x})$ is the same parameterization class for the posterior $\tilde{f}^e(\underline{x})$ and the prior $f^p(\underline{x})$ (see \ref{ch:intro}).
+
+ As far as the homotopy formulation concerned, the remaining part of this seminar uses the following equation \cite{hagmar2011}:
+ \begin{equation}
+    \tilde{f^e}(\underline{x},\lambda) = f^p(\underline{x})f^L(\underline{x})^{\lambda} \,.
+    \label{eq:homotopy_equation}
+ \end{equation}
+
+However, it should be noted that two similar versions of homotopy equation could further be considered. In \cite{daum2007} the homotopy is a log-version of \eqref{eq:homotopy_equation}
+resulting in $log(\tilde{f^e}(\underline{x},\lambda)) = log(f^p(\underline{x})) + \lambda log(f^L(\underline{x}))$. Thus, the multiplication of the prior and the corresponding likelihood is a replaced with a sum of prior and likelihood.
+
+On the other hand, \cite{hanebeck2003b} and \cite{hanebeck2003} use a parameterized version of the likelihood $\lambda$ resulting in $\tilde{f}^{e}(\underline{x}, \lambda)=f^{p}(\underline{x})\tilde{f}^{L}(\underline{x}, \lambda)$ and the homotopy-parameter $\lambda$. 
+The parameterized likelihood $\tilde{f}^{L}(\underline{x}, 0)$ is defined to be a simple approximable likelihood density and $\tilde{f}^{L}(\underline{x}, 1)$ the normal likelihood $\tilde{f}^{L}(\underline{x})$. However, a additive noise term of the measurement model $\underline{y}=\underline{h}(\underline{x}) + \underline{v}$ is assumed and as a consequence,
+the likelihood can be formulated with help of the noise term $\tilde{f}^{L}(\underline{x}, \lambda) = f^{v}(\underline{y}-\underline{h}(\underline{x}), \lambda)$. As a result of this, a more convenient representation for the homotopy is established. Similar approaches are found in \cite{hanebeck2012a} and \cite{hanebeck}.
+
+In the following step, a $f^e(\underline{x}, \underline{\theta})$ for the approximation needs to be specified. The work in \cite{hanebeck2003} and \cite{hanebeck2003b} use a Gaussian Mixture but with a singular and  a two-dimensional state $x$ respectively. A general Gaussian Mixture with a state vector $\underline{x}$ is given by
+\begin{equation}
+    f^{e}(\underline{x}, \theta) = \sum^{L}_{i=1} w^{i} \mathcal{N}(\underline{x}-\underline{\hat{x}}^{i}, \textbf{C}_{x, i}) \,,
+    \label{eq:gaussian_mixture}
+\end{equation}
+where $\mathcal{N}$ is a Gaussian with mean vector $\underline{\hat{x}}$ and variance matrix $\textbf{C}_{x, i}$. The sum of weights $w_{i}$ equals to one.
+An advantage of using Gaussian Mixtures \eqref{eq:gaussian_mixture} is the possibility of structural adaptation of the mixture components. If the given normalized measure of deviation $G_{N}(\underline{\theta}, \lambda)$ is not in a given range of $G^{L}_{N} < G_{N}(\underline{\theta, \lambda}) < G^{L}_{U}$, the critical mixture components are adjusted \cite{hanebeck2003}.
+Furthermore, the use of Dirac Mixtures is also possible for $f^e(\underline{x}, \underline{\theta})$ as stated in \cite{hanebeck2012a} for a scalar state $x$. In case of a state vector, the Dirac Mixture approximation of $\tilde{f}^e(\underline{x}, \theta)$ is stated as
+\begin{equation}
+    f^{e}(\underline{x}, \theta) = \sum^{L}_{i=1} w_{i} \delta(\underline{x}-\hat{\underline{x}}_{i})
+    \label{eq:dirac_mixture}
+\end{equation}
+The advantage for using Dirac Mixtures is that the integral operation occurring in the minimization of the deviation measure are replaced with a summation. This can be favourable as the closed form solution for it are not always 
+available \cite{hanebeck2012a}. 
+However, both options \eqref{eq:gaussian_mixture} and \eqref{eq:dirac_mixture} lead to slightly different approaches of calculating the ODE.
+
 \label{ch:homotopy_approximation}
-
+\begin{itemize}
+    \item what is the homotopy, compare to daum 2007 with log 
+    \item measures of deviation 
+\end{itemize}
 \section{Homotopy Continuation and particle Filter}
 \label{ch:homotopy_particle_filter}
 
