@@ -67,7 +67,7 @@ The sampling follows different paradigm like the importance sampling or sequenti
 case in the UKF.
 
 Beside the particle filter, the use of homotopy continuation methods is a further field of non-linear state estimation. The core idea is to gradually approximate the desired density by a given initial density via a homotopy. 
-It allows for the posterior density to have the same parameterization class as the prior density which is a positive effect because the posterior is used for the calculation of the prior distribution \cite{hagmar2011}. 
+It allows for the posterior density to have the same parameterization class as the prior density which is a positive effect because the posterior is used for the calculation of the prior distribution in the next prediction step \cite{hagmar2011}. 
 The use of homotopy progressive methods are introduced in \cite{hanebeck2003} and \cite{daum2005}. However, the latter combines it with particle flow where as the former introduce a more general approach to non-linear state estimation.
 
 The focus of this seminar are homotopy based filters in a non-linear setting. Section \ref{ch:problem_formulation} will formerly define the foundation of the estimation problem followed by the general approach of
@@ -155,9 +155,9 @@ approximation density $f^e(\underline{x}, \underline{\theta})$.
 \label{ch:homotopy_continuation}
 
 Homotopy continuation or short homotopy is a mathematical concept originated from topology and differential geometry. A homotopy can be used to continuously deform a function to a different function. For example, the use of a homotopy allows to continuously deform a
-circle to a an ellipse \cite{liao2012}. In the case of density approximation, one can use a homotopy to gradually transform the prior into the posterior instead of directly approximate the posterior which circumvent the problem of local minima. Approaching the filtering problem 
-with homotopy is also called progressive filtering \cite{hanebeck2003}, \cite{hanebeck2012a}. Additionally, homotopies are applied in different use cases such as obtaining optimal posterior parameters \cite{hagmar2011} or filtering in polynomial systems \cite{huber}.
-
+circle to a an ellipse \cite{liao2012}. In the case of density approximation, one can use a homotopy in combination of deviation measure to obtain a good approximation of the posterior. The measure of deviation is used to find such optimal approximation of the posterior but its solution may lead to the problem of local minima.
+The homotopy helps to circumvent this problem by tracking the optimum while the posterior is continuously approximated.
+Approaching the filtering problem with homotopy is also called progressive filtering \cite{hanebeck2003}, \cite{hanebeck2012a}. Additionally, homotopies are applied in different use cases such as obtaining optimal posterior parameters \cite{hagmar2011} or filtering in polynomial systems \cite{huber}.
 In section \ref{ch:math_background_homotopy} the mathematical side is shortly introduced which is then followed by the general idea of using a homotopy for the purpose of filtering \ref{ch:general_idea_homotopy}. 
 Lastly, section \ref{ch:approx_posterior_homotopy} will derive the measurement update with the use of a homotopy.
 
@@ -195,7 +195,9 @@ described may vary depending on the chosen densities and deviation measures.
  The first step in the approximation of the posterior density is the formulation of a homotopy $\tilde{f^e}(\underline{x},\lambda)$. 
  Its properties with regard to the $\lambda$-parameter are firstly,  $f^e(\underline{x}, 0) = g(\underline{x})$ and secondly, $\tilde{f}^e(\underline{x}, 1) = \tilde{f}^{e}(\underline{x}) \approx  f^{L}(\underline{x}) f^{p}(\underline{x})$.
  With respect to the choice of $g(x)$, different approaches are feasible . \cite{hanebeck2003} states that $g(\underline{x})$ is an arbitrary chosen and easy approximable density. On the contrary, \cite{hagmar2011} specifies $g(\underline{x})$ to be the prior
- $f^p(\underline{x})$. The advantage for using the prior density as $g(\underline{x})$ is the same parameterization class for the posterior $\tilde{f}^e(\underline{x})$ and the prior $f^p(\underline{x})$ (see \ref{ch:intro}).
+ $f^p(\underline{x})$. The advantage for using the prior density as $g(\underline{x})$ is coupled with the choice of the starting approximation density $f^e(\underline{x}, \underline{\theta})$. If both densities have the same parameterization class, this is ensured by setting
+ $f^p(\underline{x}) = f^e(\underline{x}, \underline{\theta})$, the posterior itself has the same parameterization class. The parameterization of the prior is yielded by the preceding prediction step in course of the estimation procedure.
+Additionally, the deviation measure for $\lambda = 0$ is fortunately minimized.
 
  As far as the homotopy formulation concerned, the remaining part of this seminar uses the following equation \cite{hagmar2011}:
  \begin{equation}
@@ -204,27 +206,78 @@ described may vary depending on the chosen densities and deviation measures.
  \end{equation}
 
 However, it should be noted that two similar versions of homotopy equation could further be considered. In \cite{daum2007} the homotopy is a log-version of \eqref{eq:homotopy_equation}
-resulting in $log(\tilde{f^e}(\underline{x},\lambda)) = log(f^p(\underline{x})) + \lambda log(f^L(\underline{x}))$. Thus, the multiplication of the prior and the corresponding likelihood is a replaced with a sum of prior and likelihood.
+resulting in $log(\tilde{f^e}(\underline{x},\lambda)) = log(f^p(\underline{x})) + \lambda log(f^L(\underline{x}))$. Thus, the multiplication of the prior and the corresponding likelihood is a replaced with a sum of prior and likelihood which reduces the 
+complexity of integral based deviation measures.
 
 On the other hand, \cite{hanebeck2003b} and \cite{hanebeck2003} use a parameterized version of the likelihood $\lambda$ resulting in $\tilde{f}^{e}(\underline{x}, \lambda)=f^{p}(\underline{x})\tilde{f}^{L}(\underline{x}, \lambda)$ and the homotopy-parameter $\lambda$. 
 The parameterized likelihood $\tilde{f}^{L}(\underline{x}, 0)$ is defined to be a simple approximable likelihood density and $\tilde{f}^{L}(\underline{x}, 1)$ the normal likelihood $\tilde{f}^{L}(\underline{x})$. However, a additive noise term of the measurement model $\underline{y}=\underline{h}(\underline{x}) + \underline{v}$ is assumed and as a consequence,
 the likelihood can be formulated with help of the noise term $\tilde{f}^{L}(\underline{x}, \lambda) = f^{v}(\underline{y}-\underline{h}(\underline{x}), \lambda)$. As a result of this, a more convenient representation for the homotopy is established. Similar approaches are found in \cite{hanebeck2012a} and \cite{hanebeck}.
 
-In the following step, a $f^e(\underline{x}, \underline{\theta})$ for the approximation needs to be specified. The work in \cite{hanebeck2003} and \cite{hanebeck2003b} use a Gaussian Mixture but with a singular and  a two-dimensional state $x$ respectively. A general Gaussian Mixture with a state vector $\underline{x}$ is given by
+In the following step, a $f^e(\underline{x}, \underline{\theta})$ needs to be specified for the approximation. As described above, \cite{hagmar2011} closely couples the choice of $f^e(\underline{x}, \underline{\theta})$ with the density type of the prior.
+For a more general case, it is possible to choose $f^e(\underline{x}, \underline{\theta})$ independent from the density type of the prior density. 
+
+The work in \cite{hanebeck2003} and \cite{hanebeck2003b} use a Gaussian Mixture but with a singular and  a two-dimensional state $x$ respectively. A general Gaussian Mixture with a state vector $\underline{x}$ is given by
 \begin{equation}
     f^{e}(\underline{x}, \theta) = \sum^{L}_{i=1} w^{i} \mathcal{N}(\underline{x}-\underline{\hat{x}}^{i}, \textbf{C}_{x, i}) \,,
     \label{eq:gaussian_mixture}
 \end{equation}
-where $\mathcal{N}$ is a Gaussian with mean vector $\underline{\hat{x}}$ and variance matrix $\textbf{C}_{x, i}$. The sum of weights $w_{i}$ equals to one.
-An advantage of using Gaussian Mixtures \eqref{eq:gaussian_mixture} is the possibility of structural adaptation of the mixture components. If the given normalized measure of deviation $G_{N}(\underline{\theta}, \lambda)$ is not in a given range of $G^{L}_{N} < G_{N}(\underline{\theta, \lambda}) < G^{L}_{U}$, the critical mixture components are adjusted \cite{hanebeck2003}.
-Furthermore, the use of Dirac Mixtures is also possible for $f^e(\underline{x}, \underline{\theta})$ as stated in \cite{hanebeck2012a} for a scalar state $x$. In case of a state vector, the Dirac Mixture approximation of $\tilde{f}^e(\underline{x}, \theta)$ is stated as
+where $\mathcal{N}$ is a Gaussian with mean vector $\underline{\hat{x}}$ and variance matrix $\textbf{C}_{x, i}$. The weights fulfils $w_{i} > 0$ and $\sum^{L}_{i=0} w_{i} = 1$.
+An advantage of using Gaussian Mixtures \eqref{eq:gaussian_mixture} is the possibility of structural adaptation of the mixture components. If the given normalized measure of deviation $G_{N}(\underline{\theta}, \lambda)$ is not in a given range of $G^{L}_{N} < G_{N}(\underline{\theta}, \lambda) < G^{L}_{U}$, the critical mixture components are adjusted \cite{hanebeck2003}.
+
+A different approach for selecting $f^e(\underline{x}, \underline{\theta})$ is stated in \cite{hanebeck2012a}. It begins with a gaussian representation of $f^e(\underline{x}, \underline{\theta})$ but later uses an approximation via Dirac Mixtures (see \eqref{eq:dirac_mixture}).
+The reason for using an alternative representation is that the solution for the derived ODE with a gaussian density is not always feasible and by using Dirac Mixtures, the integration in the ODE is transformed to a summation. Additionally, the Dirac Mixture $f^e(\underline{x}, \underline{\theta})$ incorporates intermediate representation of the posterior due to the progressive homotopy approach. 
+Thus, it covers only the important regions of the state space which leads to the use of all its dirac component \cite{hanebeck2012a}. If instead the prior is approximated by a Dirac Mixtures, it would leads to sample degeneration for large $\lambda$.
+A Dirac Mixture is stated by
 \begin{equation}
-    f^{e}(\underline{x}, \theta) = \sum^{L}_{i=1} w_{i} \delta(\underline{x}-\hat{\underline{x}}_{i})
+    f^{e}(\underline{x}, \theta) = \sum^{L}_{i=1} w_{i} \delta(\underline{x}-\hat{\underline{x}}_{i}) \,,
     \label{eq:dirac_mixture}
 \end{equation}
-The advantage for using Dirac Mixtures is that the integral operation occurring in the minimization of the deviation measure are replaced with a summation. This can be favourable as the closed form solution for it are not always 
-available \cite{hanebeck2012a}. 
-However, both options \eqref{eq:gaussian_mixture} and \eqref{eq:dirac_mixture} lead to slightly different approaches of calculating the ODE.
+with weights $w_{i} > 0$ and $\sum^{L}_{i=0} w_{i} = 1$. The choice of a specific $f^e(\underline{x}, \underline{\theta})$, e.g a Gaussian Mixture \eqref{eq:gaussian_mixture} or a Dirac Mixture \eqref{eq:dirac_mixture}, lead to different approaches as described previously.
+
+With regard to the measure of deviation $G(\underline{\theta},\lambda)$, one options is the squared integral deviation
+\begin{equation}
+    G_{SI}(\underline{\theta}, \lambda) = \frac{1}{2} \int (\tilde{f}^e(\underline{x})-f^{e}(\underline{x}))^2 \mathrm{d}\underline{x}\,,
+    \label{eq:squared_integral_dev}
+\end{equation}
+or the Kullback-Leibler-divergence
+\begin{equation}
+    G_{KL}(\underline{\theta}, \lambda) = \int \tilde{f}^e(\underline{x}) \log\left(\frac{\tilde{f}^e(\underline{x})}{f^{e}(\underline{x})} \right) \mathrm{d}\underline{x} \,.
+    \label{eq:kb_div}
+\end{equation}
+
+The first step in deriving the ODE is to take the derivative of $G(\underline{\theta},\lambda)$ with respect to $\underline{\theta}$ as it necessary for an optimal parameter $\underline{\theta}$
+\begin{equation}
+    G_{\underline{\theta}}(\underline{\theta}, \lambda) = \frac{\partial G(\underline{\theta}, \lambda)}{\partial \underline{\theta}} = 0 \,.
+    \label{eq:deriv_theta}
+\end{equation}
+Accordingly to the tracking paradigm of the optimal parameter $\underline{\theta}$, one need to take the total derivative of the equation \eqref{eq:deriv_theta} with respect to $\lambda$
+\begin{equation}
+    \begin{split}
+        \frac{\partial G_{\underline{\theta}}(\underline{\theta}(\lambda),\lambda)}{\partial \lambda} &= \frac{\partial G_{\underline{\theta}}(\underline{\theta}(\lambda),\lambda)}{\partial \underline{\theta}} \frac{\partial \underline{\theta}(\lambda)}{\partial \lambda} + \frac{\partial G_{\underline{\theta}}(\underline{\theta}(\lambda),\lambda)}{\partial \lambda} \\
+        &= G_{\underline{\theta}\underline{\theta}}(\underline{\theta}(\lambda),\lambda) \, \underline{\dot{\theta}}(\lambda) + G_{\underline{\theta}\lambda}(\underline{\theta}(\lambda),\lambda) \,.
+    \end{split}
+    \label{eq:homotopy_differential_equation}
+\end{equation}
+However, the equation \eqref{eq:homotopy_differential_equation} does not quite resembles the ODE given in \eqref{eq:ode_general} but a small rearrangement of the variables leads to
+\begin{equation}
+    G_{\underline{\theta}\lambda}(\underline{\theta}(\lambda),\lambda) = G_{\underline{\theta}\underline{\theta}}(\underline{\theta}(\lambda),\lambda) \, \underline{\dot{\theta}}(\lambda) \,,
+    \label{eq:homotopy_differential_equation2}
+\end{equation}
+which is equal to \eqref{eq:ode_general} except of the variable names.
+
+In context of a specific deviation measure, the two step derivation targeting $\underline{\theta}$ and $\lambda$ is imitated. The work in \cite{hanebeck2003} derives the ODE with the linearized deviation measure \eqref{eq:squared_integral_dev} whereas \cite{hagmar2011} uses slightly different
+procedure. It first rearranges \eqref{eq:homotopy_differential_equation2} to solve for $\underline{\dot{\theta}}(\lambda$ which is called a homotopy differential equation (HDE). Afterwards, it approximates the HDE with help of two different methods which is then further simplified
+by a given deviation measure such as \eqref{eq:squared_integral_dev} or \eqref{eq:kb_div}.
+
+Beside using special deviation measures for probability densities and its formulation into an ODE, the work in \cite{hanebeck2012a} utilizes moment matching for a scalar assumed gaussian density $f^{e}(x)$ in order derive an ODE like \eqref{eq:ode_general}. In case of a state vector $\underline{x}$
+the moment matching for the first three moments is given by
+\begin{equation}
+    \int \underline{m}f^{e}(\underline{x},\underline{\theta}) \mathrm{d}\underline{x} = \int \underline{m} \tilde{f}^{e}(\underline{x}, \lambda) \mathrm{d}\underline{x} \,,
+    \label{eq:moment_matching_div}
+\end{equation}
+with $m = \left[ 1, \underline{x}, \underline{x}^2 \right]$.
+
+After all necessary equations are defined, the last step is to use an algorithm for solving the given ODE with respect to the homotopy-paramter $\lambda$ - e.g Euler method.
 
 \label{ch:homotopy_approximation}
 \begin{itemize}
