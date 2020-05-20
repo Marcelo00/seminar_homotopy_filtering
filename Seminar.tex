@@ -124,7 +124,7 @@ On the contrary, a recursive measurement update can be derived with help of Baye
 The numerator of the the posterior density combines the likelihood \eqref{eq:likelihood_prob} with the 
 prior density \eqref{eq:prior_gen_density} where the denominator only functions as a normalization factor.
 The denominator of the posterior density \eqref{eq:posterior_gen_density} can be left out which simplifies the expression to 
-$ p(\underline{x}_{k+1} \vert \underline{Y}_{k+1}) \approx p(\underline{y}_{k+1} \vert \underline{x}_{k+1}) p(\underline{x}_{k+1} \vert \underline{Y}_{k})$.
+$ p(\underline{x}_{k+1} \vert \underline{Y}_{k+1}) \propto p(\underline{y}_{k+1} \vert \underline{x}_{k+1}) p(\underline{x}_{k+1} \vert \underline{Y}_{k})$.
 
 Assuming the models \eqref{eq:system_model} and \eqref{eq:measurement_model} to be a probabilistic model, the equations \eqref{eq:prior_gen_density} and \eqref{eq:posterior_gen_density}
 can be rewritten to
@@ -133,7 +133,7 @@ can be rewritten to
     \begin{split}
         f^e_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k+1})  &=  \dfrac{f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k})}{f(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
         &= c \, f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k}) \\
-        &\approx f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k})    \,. \label{eq:posterior_prob_density}
+        &\propto  f^{L}_{k+1}(\underline{y}_{k+1} \vert \underline{x}_{k+1}) f^{p}_{k+1}(\underline{x}_{k+1} \vert \underline{Y}_{k})    \,. \label{eq:posterior_prob_density}
     \end{split}
 \end{align}    
 For an easier notation, the prior density \eqref{eq:prior_prob_density} is abbreviated to $f^{p}_{k+1}(\underline{x}_{k+1})$ and the posterior density \eqref{eq:posterior_prob_density} to $f^e_{k+1}(\underline{x}_{k+1})$. 
@@ -142,13 +142,16 @@ Furthermore, the transitional density and the likelihood can also be reduced to 
 As stated in section \ref{ch:intro} a closed form solution of the prior and posterior density is generally not possible except in few special cases - e.g. additive gaussian noise with initial gaussian distribution. Thus, an approximation for the 
 respective densities is needed. 
 
-In the following chapters, an approximation of a true density $\tilde{f}$ is given by $f$. Additionally, the formulations are given for specific $k$th measurement update or rather filter step. The goal now is to find an approximation of $\tilde{f}^e(\underline{x})$ 
+In the following chapters, an approximation of a true density $\tilde{f}$ is given by $f$. Additionally, the formulations are given for a specific $k$th measurement update or rather filter step. The goal now is to find an approximation of $\tilde{f}^e(\underline{x})$ 
 denoted as $f^e(\underline{x})$. Keep in mind that the recursive filtering demand an re-approximation after each filtering step because the type of the density may change. 
 
 One method is to use a measure of deviation $G(\underline{\theta})$ between the approximation probability density 
 $f^e(\underline{x}, \underline{\theta})$ - e.g. Gaussian Mixtures - and the desired true posterior $\tilde{f}^{e}(\underline{x})$. In order to get a good approximation, one need to minimize the deviation measure with respect to the 
 parameter vector $\underline{\theta}$. Though, numerical solution of the optimization problem may lead to local minima which in return does not ensure an optimal parameter for the 
 approximation density $f^e(\underline{x}, \underline{\theta})$. 
+
+Furthermore, it is possible to calculate $f^{e}$ based on weighted samples using particle filters. The main problem here is the sample degeneracy. The sample degeneracy states that only few particle contribute to the approximation whereas most particles 
+have weights close to zero \cite{arulampalam2002} leading to a increase in the weight variance. Therefore, a large part of the computational power is used for updating particles having no effect in the approximations process.
 
 
 \section{Non-linear Filtering with Homotopy Continuation}
@@ -159,7 +162,7 @@ circle to a an ellipse \cite{liao2012}. In the case of density approximation, on
 The homotopy helps to circumvent this problem by tracking the optimum while the posterior is continuously approximated.
 Approaching the filtering problem with homotopy is also called progressive filtering \cite{hanebeck2003}, \cite{hanebeck2012a}. Additionally, homotopies are applied in different use cases such as obtaining optimal posterior parameters \cite{hagmar2011} or filtering in polynomial systems \cite{huber}.
 In section \ref{ch:math_background_homotopy} the mathematical side is shortly introduced which is then followed by the general idea of using a homotopy for the purpose of filtering \ref{ch:general_idea_homotopy}. 
-Lastly, section \ref{ch:approx_posterior_homotopy} will derive the measurement update with the use of a homotopy.
+Lastly, section \ref{ch:approx_posterior_homotopy} will derive one use of homotopy in context of filtering.
 
 \subsection{Mathematical background}
 \label{ch:math_background_homotopy}
@@ -180,17 +183,17 @@ The general procedure of using homotopy for the approximation of the posterior f
     the homotopy-parameter $\lambda$ handles the progression between a starting density - $\lambda = 0$ - and the posterior $\tilde{f}^e(\underline{x})$ in case for $\lambda = 1$.
     \item Define a density $f^e(\underline{x}, \underline{\theta})$ with a $\lambda$ dependent parameter vector $\underline{\theta}$ which will approximate $\tilde{f^e}(\underline{x},\lambda)$
     \item Define a measure of deviation $G(\underline{\theta}, \lambda)$ between $f^e(\underline{x}, \underline{\theta})$ and $\tilde{f^e}(\underline{x},\lambda)$
-    \item An ordinary differential equation (ODE) is derived in order to calculate the parameter $\underline{\theta}(\lambda)$:
+    \item An ordinary differential equation (ODE) is derived in order to calculate the parameter $\underline{\theta}(\lambda)$. The ODE form itself can vary but in a general case it is similar to
     \begin{equation}
-        \underline{b}(\underline{\theta}, \lambda) = \textbf{A}\underline{\dot{\theta}}(\lambda)
+        \underline{b}(\underline{\theta}, \lambda) = \textbf{A}(\underline{\theta})\underline{\dot{\theta}}(\lambda) \,.
         \label{eq:ode_general}
     \end{equation}
 \end{enumerate}
 
-As $\lambda$ approaches $1$, the solution of the ODE \eqref{eq:ode_general} provides the optimal parameter $\underline{\lambda}$ for the density $\tilde{f}^e(\underline{x}, \underline{\theta})$ and thus, an optimal approximation of $\tilde{f}(\underline{x})$ is found. The concrete result of the steps 
+As $\lambda$ approaches $1$, the solution of the ODE \eqref{eq:ode_general} provides the optimal parameter $\underline{\theta}$ for the density $f^e(\underline{x}, \underline{\theta})$ and thus, an optimal approximation of $\tilde{f}(\underline{x})$ is found. The concrete result of the steps 
 described may vary depending on the chosen densities and deviation measures.
 
-\subsection{Approximation of the Posterior Density via Homotopy}
+\subsection{Approximation of the Posterior Parameters via Homotopy}
 \label{ch:approx_posterior_homotopy}
  The first step in the approximation of the posterior density is the formulation of a homotopy $\tilde{f^e}(\underline{x},\lambda)$. 
  Its properties with regard to the $\lambda$-parameter are firstly,  $f^e(\underline{x}, 0) = g(\underline{x})$ and secondly, $\tilde{f}^e(\underline{x}, 1) = \tilde{f}^{e}(\underline{x}) \approx  f^{L}(\underline{x}) f^{p}(\underline{x})$.
@@ -222,17 +225,19 @@ The work in \cite{hanebeck2003} and \cite{hanebeck2003b} use a Gaussian Mixture 
     \label{eq:gaussian_mixture}
 \end{equation}
 where $\mathcal{N}$ is a Gaussian with mean vector $\underline{\hat{x}}$ and variance matrix $\textbf{C}_{x, i}$. The weights fulfils $w_{i} > 0$ and $\sum^{L}_{i=0} w_{i} = 1$.
-An advantage of using Gaussian Mixtures \eqref{eq:gaussian_mixture} is the possibility of structural adaptation of the mixture components. If the given normalized measure of deviation $G_{N}(\underline{\theta}, \lambda)$ is not in a given range of $G^{L}_{N} < G_{N}(\underline{\theta}, \lambda) < G^{L}_{U}$, the critical mixture components are adjusted \cite{hanebeck2003}.
+An advantage of using Gaussian Mixtures \eqref{eq:gaussian_mixture} is the possibility of structural adaptation of the mixture components. If the given normalized measure of deviation $G_{N}(\underline{\theta}, \lambda)$ is not in a given range of $G^{L}_{N} < G_{N}(\underline{\theta}, \lambda) < G^{L}_{U}$, 
+the critical mixture components are adjusted \cite{hanebeck2003}.
 
 A different approach for selecting $f^e(\underline{x}, \underline{\theta})$ is stated in \cite{hanebeck2012a}. It begins with a gaussian representation of $f^e(\underline{x}, \underline{\theta})$ but later uses an approximation via Dirac Mixtures (see \eqref{eq:dirac_mixture}).
-The reason for using an alternative representation is that the solution for the derived ODE with a gaussian density is not always feasible and by using Dirac Mixtures, the integration in the ODE is transformed to a summation. Additionally, the Dirac Mixture $f^e(\underline{x}, \underline{\theta})$ incorporates intermediate representation of the posterior due to the progressive homotopy approach. 
-Thus, it covers only the important regions of the state space which leads to the use of all its dirac component \cite{hanebeck2012a}. If instead the prior is approximated by a Dirac Mixtures, it would leads to sample degeneration for large $\lambda$.
+The reason for using an alternative representation is that the solution for the derived ODE with a gaussian density is not always feasible and by using Dirac Mixtures, the integration in the ODE is transformed to a summation. Additionally, the Dirac Mixture $f^e(\underline{x}, \underline{\theta})$ 
+incorporates intermediate representation of the true posterior due to the progressive homotopy approach. 
+Thus, it covers only the important regions of the state space which leads to the use of all its dirac components \cite{hanebeck2012a}. If instead the prior is approximated by a Dirac Mixtures, the calculation of the posterior would lead to sample degeneration for large $\lambda$.
 A Dirac Mixture is stated by
 \begin{equation}
     f^{e}(\underline{x}, \theta) = \sum^{L}_{i=1} w_{i} \delta(\underline{x}-\hat{\underline{x}}_{i}) \,,
     \label{eq:dirac_mixture}
 \end{equation}
-with weights $w_{i} > 0$ and $\sum^{L}_{i=0} w_{i} = 1$. The choice of a specific $f^e(\underline{x}, \underline{\theta})$, e.g a Gaussian Mixture \eqref{eq:gaussian_mixture} or a Dirac Mixture \eqref{eq:dirac_mixture}, lead to different approaches as described previously.
+with the Dirac delta function $\delta( \cdot )$, weights $w_{i} > 0$ and $\sum^{L}_{i=0} w_{i} = 1$. The choice of a specific $f^e(\underline{x}, \underline{\theta})$, e.g a Gaussian Mixture \eqref{eq:gaussian_mixture} or a Dirac Mixture \eqref{eq:dirac_mixture}, lead to different approaches as described previously.
 
 With regard to the measure of deviation $G(\underline{\theta},\lambda)$, one options is the squared integral deviation
 \begin{equation}
@@ -245,7 +250,7 @@ or the Kullback-Leibler-divergence
     \label{eq:kb_div}
 \end{equation}
 
-The first step in deriving the ODE is to take the derivative of $G(\underline{\theta},\lambda)$ with respect to $\underline{\theta}$ as it necessary for an optimal parameter $\underline{\theta}$
+The first step in deriving the ODE is to take the derivative of $G(\underline{\theta},\lambda)$ with respect to $\underline{\theta}$ as it is necessary for an optimal parameter $\underline{\theta}$
 \begin{equation}
     G_{\underline{\theta}}(\underline{\theta}, \lambda) = \frac{\partial G(\underline{\theta}, \lambda)}{\partial \underline{\theta}} = 0 \,.
     \label{eq:deriv_theta}
@@ -258,40 +263,114 @@ Accordingly to the tracking paradigm of the optimal parameter $\underline{\theta
     \end{split}
     \label{eq:homotopy_differential_equation}
 \end{equation}
-However, the equation \eqref{eq:homotopy_differential_equation} does not quite resembles the ODE given in \eqref{eq:ode_general} but a small rearrangement of the variables leads to
+After taken the derivative, the equation \eqref{eq:homotopy_differential_equation} can be rearranged to solve for $\underline{\dot{\theta}}(\lambda)$ which leads to the final ODE
 \begin{equation}
-    G_{\underline{\theta}\lambda}(\underline{\theta}(\lambda),\lambda) = G_{\underline{\theta}\underline{\theta}}(\underline{\theta}(\lambda),\lambda) \, \underline{\dot{\theta}}(\lambda) \,,
+    \underline{\dot{\theta}}(\lambda) = - G_{\underline{\theta}\lambda}(\underline{\theta}(\lambda),\lambda) G_{\underline{\theta}\underline{\theta}}(\underline{\theta}(\lambda),\lambda)^{-1} \,,
     \label{eq:homotopy_differential_equation2}
 \end{equation}
-which is equal to \eqref{eq:ode_general} except of the variable names.
+called homotopy differential equation (HDE) \cite{hagmar2011}.
 
-In context of a specific deviation measure, the two step derivation targeting $\underline{\theta}$ and $\lambda$ is imitated. The work in \cite{hanebeck2003} derives the ODE with the linearized deviation measure \eqref{eq:squared_integral_dev} whereas \cite{hagmar2011} uses slightly different
-procedure. It first rearranges \eqref{eq:homotopy_differential_equation2} to solve for $\underline{\dot{\theta}}(\lambda$ which is called a homotopy differential equation (HDE). Afterwards, it approximates the HDE with help of two different methods which is then further simplified
-by a given deviation measure such as \eqref{eq:squared_integral_dev} or \eqref{eq:kb_div}.
+In context of a specific deviation measure, the two step derivation with regard to $\underline{\theta}$ and $\lambda$ is imitated. The work in \cite{hanebeck2003} formulates the ODE with the linearized deviation measure \eqref{eq:squared_integral_dev} whereas \cite{hagmar2011} uses slightly different
+procedure. It firstly approximates the HDE \eqref{eq:homotopy_differential_equation2} with help of two different methods which is then further simplified
+by a given deviation measure such as \eqref{eq:squared_integral_dev} or \eqref{eq:kb_div}. 
 
-Beside using special deviation measures for probability densities and its formulation into an ODE, the work in \cite{hanebeck2012a} utilizes moment matching for a scalar assumed gaussian density $f^{e}(x)$ in order derive an ODE like \eqref{eq:ode_general}. In case of a state vector $\underline{x}$
+Beside using special deviation measures for probability densities and its formulation into an ODE, the work in \cite{hanebeck2012a} utilizes moment matching for a scalar assumed gaussian density $f^{e}(x)$. In case of a state vector $\underline{x}$
 the moment matching for the first three moments is given by
 \begin{equation}
     \int \underline{m}f^{e}(\underline{x},\underline{\theta}) \mathrm{d}\underline{x} = \int \underline{m} \tilde{f}^{e}(\underline{x}, \lambda) \mathrm{d}\underline{x} \,,
     \label{eq:moment_matching_div}
 \end{equation}
-with $m = \left[ 1, \underline{x}, \underline{x}^2 \right]$.
+with $m = \left[ 1, \underline{x}, \underline{x}^2 \right]$. Based on \eqref{eq:moment_matching_div}, the derivative with respect to $\lambda$ is taken. Once the terms are rearranged, a result similar to \eqref{eq:homotopy_differential_equation2} is obtained.
 
-After all necessary equations are defined, the last step is to use an algorithm for solving the given ODE with respect to the homotopy-paramter $\lambda$ - e.g Euler method.
+The last step is to use an algorithm for solving the given ODE with respect to the homotopy-paramter $\lambda$. A typical method for solving an ODE is the Euler method. 
 
-\label{ch:homotopy_approximation}
-\begin{itemize}
-    \item what is the homotopy, compare to daum 2007 with log 
-    \item measures of deviation 
-\end{itemize}
 \section{Homotopy Continuation and particle Filter}
 \label{ch:homotopy_particle_filter}
 
+The field of particle filter is a further filter technique for recursive state estimation. Its basic idea is to sample weighted points, called particles, from the
+posterior and then use these points and the corresponding weights to compute $f^{e}(\underline{x})$ \cite{arulampalam2002}. 
+As mentioned in section \ref{ch:intro}, importance sampling is one central paradigm in particle filters. Since the posterior density is most likely a complex density from which the samples can not be directly taken,  a different but very similar density is leveraged for the sampling procedure.
+The different density is called importance density or proposal density \cite{daum2005}, \cite{chlebek2016a}.
 
+In order to solve the problem of sample degeneracy (see section \ref{ch:problem_formulation}), either a good importance density or a smart resampling of the particles can be used. Besides these general approaches of mitigating the sample degeneracy, an homotopy-based approach is also possible \cite{chlebek2016a}, \cite{bunch2013a}, \cite{daum2013a}. These methods gradually incorperates the new
+measurement information into the approximation. It also called particle flow as the particles continuously transformed to the posterior by the homotopy-parameter $\lambda$ \cite{daum2013a}.
+
+\subsection{Importance Sampling}
+\label{ch:importance_sampling}
+As an introductory example let $\hat{h}$ donate the result of the integral $\int \phi(\underline{x})p(\underline{x})$ where $\phi(\underline{x})$ is an arbitrary function and $p(\underline{x})$ the complex probability density. As a closed form solution of this integral does not always exist, one can approximate $p(\underline{x})$
+by taking samples from it but even this ist no feasible for complex high-dimensional densities. A solution for this is to sample particles $\underline{x}^{(i)}$, $i = 1, \dotsc, N$ from a similar density $q(\underline{x})$ which is the importance density. This sampling also includes a weighting factor $w^{(i)}$ for each particle and its value 
+is proportional to $\frac{p(\underline{x})}{q(\underline{x})}$ \cite{arulampalam2002}. Based on these formulations, the $\hat{h}$ can be rewritten to include the importance density $q(\underline{x})$ \cite{cappe2007b}:
+\begin{equation}
+    \begin{split}
+        \hat{h} &= \int h(\underline{x})\frac{q(\underline{x})p(\underline{x})}{q(\underline{x})} \\
+                &\approx \sum_{i=1}^{N} \frac{w^{(i)}}{\sum_{j=1}^{N} w^{(j)}}h(\underline{x}^{(i)}) \\
+                &= \sum_{i=1}^{N} \bar{w}^{(i)} h(\underline{x}^{(i)})\,,
+    \end{split}
+    \label{eq:importance_sampling}
+\end{equation}
+and $w^{(i)}=\frac{p(\underline{x}^{(i)})}{q(\underline{x}^{(i)})}$ as our weighting factor and the normalized weights $\bar{w}^{(i)}$. The sum in \eqref{eq:importance_sampling} is the result of assuming a density such as Dirac mixture for $q(\underline{x})$ with discrete points $\underline{x}^{(i)}$ and weights $w^{(i)}$.
+
+\subsection{Homotopy in Importance Sampling}
+\label{ch:homotopy_importance_sampling}
+One goal of homotopy in particle filter based on importance sampling is to generate a good importance density. This approach is exemplary described with the work in \cite{chlebek2016a}. It
+propose a two step method that predicts and then updates particles with the corresponding weights. The homotopy used in the procedure is given in \eqref{eq:homtopy_importance_sampling} and is similar to \eqref{eq:homotopy_equation} except the additional normalization constant $c(\lambda)$.
+Furthermore, the main assumption for this approach is that $\tilde{f}^{e}(\underline{x})$, $f^{p}(\underline{x})$ and the importance density $q_{\tau}(\underline{x})$ are Gaussian densities.
+
+\begin{equation}
+    \tilde{f^e}(\underline{x},\lambda) = c(\lambda)f^p(\underline{x})f^L(\underline{x})^{\lambda} \,.
+    \label{eq:homtopy_importance_sampling}
+\end{equation}
+
+The first step is primarily aimed to create a importance density which is then used to update the weights of the particles in the second step.
+In order to do derive the importance density for the $\tau$-th progression step, the first objective is to predict the displacement of particle set $\,\, \begin{bmatrix} \underline{x}_{\tau+1}^{(1)}, \dotsc, \underline{x}_{\tau+1}^{(L)} \end{bmatrix}$ which is caused during the progression.
+The following equation delivers the desired particle set:
+\begin{equation}
+    \underline{x}_{\tau + 1}^{(i)} = \textbf{F}_{\tau}
+        \begin{bmatrix}
+            \underline{x}_{\tau}^{(i)} \\ 
+            \underline{x}_{\tau -1}^{(i)}
+        \end{bmatrix} \,,
+\end{equation}
+with F being a transition matrix that adjusts the particles $\underline{x}_{\tau}^{(i)}$ and $\underline{x}_{\tau-1}^{(i)}$ via coefficients $T = \frac{\Delta\lambda_{\tau}}{\Delta\lambda_{\tau-1}}$\cite{chlebek2016a}.
+These preceding particles are obtained from the Dirac mixture approximation of the respective interim posterior densities $\tilde{f}^{e}(\underline{x}, \lambda)$.
+An approximation for a specific $\tau$-th progression step is given by
+ \begin{equation}
+    f^{e}(\underline{x}, \lambda_{\tau}) = \sum_{i=1}^{L}w^{(i)}\delta(\underline{x}-\underline{x}_{\tau}^{(i)}) \,,
+    \label{eq:dirac_approx_interim_posterior}
+ \end{equation}
+including equally weighted weights.
+Furthermore, the particles for calculating $\underline{x}_{\tau + 1}^{(i)}$ are selected in such way that minimizes the second-order Wasserstein distance between  $f^{e}(\underline{x}, \lambda_{\tau})$ and $f^{e}(\underline{x}, \lambda_{\tau-1})$ \cite{chlebek2016a}. 
+The importance density $q_{\tau}(\underline{x})$ is then calculated based on the predicted particle set via moment matching.
+
+The next step leverages the importance density $q_{\tau}(\underline{x})$ and
+combines it with the homotopy \eqref{eq:homtopy_importance_sampling} resulting in the interim posterior
+\begin{equation}
+    \tilde{f}^{e}(\underline{x}, \lambda_{\tau}) = c(\lambda)f^L(\underline{x})^{\lambda_{\tau}}\frac{f^p(\underline{x})}{q_{\tau}(\underline{x})}q_{\tau}(\underline{x}) \,.
+    \label{eq:posterior_interim_posterior}
+\end{equation}
+The predicted particles are also used to simplify the equation \eqref{eq:posterior_interim_posterior} by using a Dirac mixture for $q_{\tau}(\underline{x})$ with dirac components equal to the particles (see section \ref{ch:importance_sampling}).
+This leads to the final equation for the interim posterior $\tilde{f}^{e}(\underline{x}, \lambda_{\tau})$
+\begin{equation}
+    \tilde{f}^{e}(\underline{x}, \lambda_{\tau}) = c(\lambda) \sum_{i=1}^{L}w^{(i)}f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,.
+    \label{eq:posterior_interim_posterior}
+\end{equation}
+Lastly, the weights are being updated according to
+\begin{equation}
+    \hat{w}^{(i)}= f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,,
+    \label{eq:posterior_update_weights}
+\end{equation}
+and their normalized weights $\bar{w}^{(i)}$ obtained from the $\hat{w}^{(i)}$.
+
+The procedure is repeated until the the final interim posterior $\tilde{f}^{e}(\underline{x}, \lambda=1)$ is reached which is the desired posterior $\tilde{f}(\underline{x})$.
 \section{Conclusion}
 \label{ch:conclusion}
 \begin{itemize}
-    \item Compare findings of different methods
+    \item Homotopy useful to circumvent the problem of 
+    \begin{itemize}
+        \item  local minima in the procedure of optimizing deviation measurement
+        \item  particle degeneracy in particle filtering    
+    \end{itemize}
+    \item continous approximation and discrete approximation
 \end{itemize}
 
 
