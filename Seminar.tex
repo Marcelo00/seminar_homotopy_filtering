@@ -30,7 +30,9 @@
 
 % Zusammenfassung
 \begin{abstract}
-Non-linear filtering with use of ordinary differential equation.
+The filtering in a nonlinear context is a complex endeavour that in most cases does not have any closed form solution available. Thus, a approximation of the posterior density
+is necessary. A wider variety of algorithms exist for tackling nonlinear systems. However, problems like local-minima or particle degeneracy are a common difficulty in these algorithms.
+In this context, the mathematical concept of homotopy is used to try circumvent these problems. 
 \end{abstract}
 
 % Erster Abschnitt
@@ -57,8 +59,8 @@ on the measurements and the system inputs in the former case.
 
 Including all measurement and input information at every estimation cycle is not computational beneficial. Thus, a recursive approach that sequentially leverages the current information is preferred.
 
-An additional property of systems is the linearity or non-linearity which respectively leads to different strategies regarding the previous mentioned estimation procedure.
-In the linear case, the well known Kalman Filter \cite{Kalman1960} leads to an optimal solution for the estimation problem and includes a recursive approach. However, the non-linearity of a system
+An additional property of systems is the linearity or nonlinearity which respectively leads to different strategies regarding the previous mentioned estimation procedure.
+In the linear case, the well known Kalman Filter \cite{Kalman1960} leads to an optimal solution for the estimation problem and includes a recursive approach. However, the nonlinearity of a system
 impede a closed form solution of the priori and posterior distribution. The reasons for this ist that the calculation of the respective probability density is computational infeasible and in the worst case not
 possible. Thus, an approximation of the respective estimates is necessary. Typical examples for approaching this problem are the Unscented Kalman Filter (UKF) \cite{julier2004} or the Extended Kalman Filter (EKF) \cite{jazwinski2007}.
 
@@ -66,18 +68,17 @@ Next to the Kalman based filters, many other approaches are introduced in scient
 The sampling follows different paradigm like the importance sampling or sequential Monte Carlo \cite{cappe2007b}. The advantage of such filters is that they do not depend the posterior to be closely approximated by a gaussian distribution \cite{cappe2007b} like the 
 case in the UKF.
 
-Beside the particle filter, the use of homotopy continuation methods is a further field of non-linear state estimation. The core idea is to gradually approximate the desired density by a given initial density via a homotopy. 
+Beside the particle filter, the use of homotopy continuation methods is a further field of nonlinear state estimation. The core idea is to gradually approximate the desired density by a given initial density via a homotopy. 
 It allows for the posterior density to have the same parameterization class as the prior density which is a positive effect because the posterior is used for the calculation of the prior distribution in the next prediction step \cite{hagmar2011}. 
-The use of homotopy progressive methods are introduced in \cite{hanebeck2003} and \cite{daum2005}. However, the latter combines it with particle flow where as the former introduce a more general approach to non-linear state estimation.
+The use of homotopy progressive methods are introduced in \cite{hanebeck2003} and \cite{daum2005}. However, the latter combines it with particle flow where as the former introduce a more general approach to nonlinear state estimation.
 
-The focus of this seminar are homotopy based filters in a non-linear setting. Section \ref{ch:problem_formulation} will formerly define the foundation of the estimation problem followed by the general approach of
-homotopy based filtering in section \ref{ch:homotopy_continuation}. Next, Section \ref{ch:homotopy_particle_filter} will exemplary present the intersection of homotopy and particle filter and lastly, section \ref{ch:conclusion} will draw a conclusion.
-
+The focus of this seminar are homotopy based filters in a nonlinear setting. In the following sections, the usage of homotopy is discussed for two distinct use cases namely the approximation of the posterior parameters and the usage in importance sampling according to particle filters. First, section \ref{ch:problem_formulation} will formerly define the foundation of the estimation problem and then focuses on the problems 
+of nonlinear filtering. This section also includes a short explanation of the advantages that homotopy methodology imply with respect to the problems. The next section \ref{ch:homotopy_continuation} will derive the basic of homotopy filtering and explain its usage in context of posterior parametrization. In the next section \ref{ch:homotopy_particle_filter}, the intersection of homotopy and particle filter in context of importance sampling will be given which is then followed by the conclusion \ref{ch:conclusion}.
 
 \section{Problem Formulation}
 \label{ch:problem_formulation}
 
-The estimation of a state depends on the underlying structure of the non-linear system and measurement model. A general definition for discrete-time models is given by
+The estimation of a state depends on the underlying structure of the nonlinear system and measurement model. A general definition for discrete-time models is given by
 
 \begin{align}
     \underline{x}_{k+1}  &= \underline{a}_{k}(\underline{x}_{k}, \hat{u}_{k},  \underline{w}_{k}) \,,  \label{eq:system_model} \\
@@ -85,9 +86,9 @@ The estimation of a state depends on the underlying structure of the non-linear 
 \end{align}
 
 where equation \eqref{eq:system_model} defines the system model where as equation \eqref{eq:measurement_model} defines the measurement model. In equation \eqref{eq:system_model}, 
-the $\underline{a}_{k}$ describes the non-linear relation of state vector $\underline{x}_{k}$ and the system input $\hat{u}_{k}$ with regard to the state vector in the next time step - $\underline{x}_{k+1}$.
+the $\underline{a}_{k}$ describes the nonlinear relation of state vector $\underline{x}_{k}$ and the system input $\hat{u}_{k}$ with regard to the state vector in the next time step - $\underline{x}_{k+1}$.
 System disturbances are modelled by a random vector $\underline{w}_{k}$ with a density of $f^{w}_{k}(w_{k})$. With respect to the state vector $\underline{x}_{k}$ and the measurement vector $\underline{y}_{k}$,
-the non-linear relation is given by $\underline{h}_{k}$. The measurement noise is stated as a random vector $\underline{v}_{k}$ Including its corresponding density $f^{v}_{k}(v_{k})$. Additionally, let $k$ donates a discrete time stamp.
+the nonlinear relation is given by $\underline{h}_{k}$. The measurement noise is stated as a random vector $\underline{v}_{k}$ Including its corresponding density $f^{v}_{k}(v_{k})$. Additionally, let $k$ donates a discrete time stamp.
 For $\underline{w}_{k}$ and $\underline{v}_{k}$ a white noise assumption is used.
 
 Based on the equations above, the probability density of the new state, called transition probability, and the probability density for the measurement, refereed to as the likelihood probability, are defined as:
@@ -154,7 +155,7 @@ Furthermore, it is possible to calculate $f^{e}$ based on weighted samples using
 have weights close to zero \cite{arulampalam2002} leading to a increase in the weight variance. Therefore, a large part of the computational power is used for updating particles having no effect in the approximations process.
 
 
-\section{Non-linear Filtering with Homotopy Continuation}
+\section{Homotopy Continuation and Parameter Optimization}
 \label{ch:homotopy_continuation}
 
 Homotopy continuation or short homotopy is a mathematical concept originated from topology and differential geometry. A homotopy can be used to continuously deform a function to a different function. For example, the use of a homotopy allows to continuously deform a
@@ -164,7 +165,7 @@ Approaching the filtering problem with homotopy is also called progressive filte
 In section \ref{ch:math_background_homotopy} the mathematical side is shortly introduced which is then followed by the general idea of using a homotopy for the purpose of filtering \ref{ch:general_idea_homotopy}. 
 Lastly, section \ref{ch:approx_posterior_homotopy} will derive one use of homotopy in context of filtering.
 
-\subsection{Mathematical background}
+\subsection{Mathematical Background of Homotopy}
 \label{ch:math_background_homotopy}
 The mathematical definition for a homotopy is a continuous function $H:X \times [0,1] \rightarrow Y$ mapping a function $f(x)$ from the topological space $X$ to the function $g(x)$ from topological space $Y$ in such way 
 that $H(x,0)=g(x)$ and $H(x,1)=f(x)$ \cite{liao2012}. 
@@ -313,7 +314,10 @@ and $w^{(i)}=\frac{p(\underline{x}^{(i)})}{q(\underline{x}^{(i)})}$ as our weigh
 \subsection{Homotopy in Importance Sampling}
 \label{ch:homotopy_importance_sampling}
 One goal of homotopy in particle filter based on importance sampling is to generate a good importance density. This approach is exemplary described with the work in \cite{chlebek2016a}. It
-propose a two step method that predicts and then updates particles with the corresponding weights. The homotopy used in the procedure is given in \eqref{eq:homtopy_importance_sampling} and is similar to \eqref{eq:homotopy_equation} except the additional normalization constant $c(\lambda)$.
+propose a two step method that predicts and then updates particles with the corresponding weights. 
+It should be noted here that in \cite{bunch2013a} uses a similar to step method to derive an approximation of the posterior via importance sampling but differ in their state and weight update.
+
+The homotopy used in the procedure \cite{chlebek2016a}is given in \eqref{eq:homtopy_importance_sampling} and is similar to \eqref{eq:homotopy_equation} except the additional normalization constant $c(\lambda)$.
 Furthermore, the main assumption for this approach is that $\tilde{f}^{e}(\underline{x})$, $f^{p}(\underline{x})$ and the importance density $q_{\tau}(\underline{x})$ are Gaussian densities.
 
 \begin{equation}
@@ -359,19 +363,23 @@ Lastly, the weights are being updated according to
     \hat{w}^{(i)}= f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,,
     \label{eq:posterior_update_weights}
 \end{equation}
-and their normalized weights $\bar{w}^{(i)}$ obtained from the $\hat{w}^{(i)}$.
+and their normalized weights $\bar{w}^{(i)}$ are calculated from the $\hat{w}^{(i)}$.
 
 The procedure is repeated until the the final interim posterior $\tilde{f}^{e}(\underline{x}, \lambda=1)$ is reached which is the desired posterior $\tilde{f}(\underline{x})$.
+
 \section{Conclusion}
 \label{ch:conclusion}
-\begin{itemize}
-    \item Homotopy useful to circumvent the problem of 
-    \begin{itemize}
-        \item  local minima in the procedure of optimizing deviation measurement
-        \item  particle degeneracy in particle filtering    
-    \end{itemize}
-    \item continous approximation and discrete approximation
-\end{itemize}
+This seminar elucidated the usage of homotopy in context of nonlinear filters by introducing it to two use cases. The overall goal is to approximate the posterior density. 
+A homotopy is a mathematical method that continuously deform a given function $f(x)$ to a function $g(x)$ via the homotopy-parameter $\lambda$.
+In case of filtering, homotopies are used to gradually include the newest measurement $y_{k}$ into the posterior and by doing so obtain interim representations of the posterior.
+
+The first case that leverages homotopy is the parameterized approximation of the posterior using a measure of deviation between the true posterior and its approximation density. Traditional optimizations technique regarding the minimization of the deviation measurements may lead to
+suboptimal parameters due to the local minima problem. The homotopy is used in such way that it allows to track the optimal parameter while the prior density is more and more transformed to the posterior by using an ODE. 
+
+The second case is concerned with the importance sampling in context of particle filters. In contrast to the first use case, the importance sampling results in a discrete approximation of the posterior with particles and corresponding weights.
+A traditional approach is the sequential importance sampling which however suffers from particle degeneracy. For this problem, a homotopy is leveraged to get a interim importance densities from which the particles that approximates the posterior are obtained.
+The specific exemplary method discussed in the seminar uses a Gaussian assumptions for the prior and the posterior whereas the approach for the first use case does not have such assumptions.
+
 
 
 % Literaturverzeichnis in Literatur.bib
