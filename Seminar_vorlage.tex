@@ -164,6 +164,65 @@ Connection between prediction and filtering in sense of Bayes Theorem
     p(x_{k+1} \vert y_{0:k+1}, u_{0:k}) =  \frac{p(y_{k} \vert x_{k})p(x_{k+1} \vert y_{0:k}, u_{0:k})}{p(y_{k+1} \vert y_{0:k})}\,, \\
 \end{equation}
 
+\begin{equation}
+    \begin{split}
+        p(\underline{x}_{k+1} \vert \underline{Y}_{k+1}) &= p(\underline{x}_{k+1} \vert \underline{Y}_{k}, \underline{y}_{k+1}) \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1}, \underline{Y}_{k})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1}) p(\underline{x}_{k+1} \vert \underline{Y}_{k})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \,.  
+        \label{eq:posterior_gen_density}
+    \end{split}
+\end{equation}
+
+The homotopy used in the procedure \cite{chlebek2016a} is given in \eqref{eq:homtopy_importance_sampling} and is similar to \eqref{eq:homotopy_equation} except the additional normalization constant $c(\lambda)$.
+Furthermore, the main assumption for this approach is that $\tilde{f}^{e}(\underline{x})$, $f^{p}(\underline{x})$ and the importance density $q_{\tau}(\underline{x})$ are Gaussian densities.
+
+\begin{equation}
+    \tilde{f^e}(\underline{x},\lambda) = c(\lambda)f^p(\underline{x})f^L(\underline{x})^{\lambda} \,.
+    \label{eq:homtopy_importance_sampling}
+\end{equation}
+
+The first step is primarily aimed to create an importance density which is then used to update the weights of the particles in the second step.
+In order to derive the importance density for the $\tau \textsuperscript{th}$ progression step, the first objective is to predict the displacement of the particle set $\,\, \begin{bmatrix} \underline{x}_{\tau+1}^{(1)}, \dotsc, \underline{x}_{\tau+1}^{(L)} \end{bmatrix}$ which is caused during the progression.
+The following equation delivers the desired particle set \cite{chlebek2016a}:
+\begin{equation}
+    \underline{x}_{\tau + 1}^{(i)} = \textbf{F}_{\tau}
+        \begin{bmatrix}
+            \underline{x}_{\tau}^{(i)} \\ 
+            \underline{x}_{\tau -1}^{(i)}
+        \end{bmatrix} \,,
+\end{equation}
+with F being a transition matrix that adjusts the particles $\underline{x}_{\tau}^{(i)}$ and $\underline{x}_{\tau-1}^{(i)}$ via coefficients $T = \frac{\Delta\lambda_{\tau}}{\Delta\lambda_{\tau-1}}$\cite{chlebek2016a}.
+These particles are obtained from the Dirac mixture approximation of the respective interim posterior densities $\tilde{f}^{e}(\underline{x}, \lambda)$.
+An approximation for a specific $\tau$-th progression step is given by
+ \begin{equation}
+    f^{e}(\underline{x}, \lambda_{\tau}) = \sum_{i=1}^{L}w^{(i)}\delta(\underline{x}-\underline{x}_{\tau}^{(i)}) \,,
+    \label{eq:dirac_approx_interim_posterior}
+ \end{equation}
+including equally weighted weights.
+Furthermore, the particles for calculating $\underline{x}_{\tau + 1}^{(i)}$ are selected in such way that minimizes the second-order Wasserstein distance between  $f^{e}(\underline{x}, \lambda_{\tau})$ and $f^{e}(\underline{x}, \lambda_{\tau-1})$ \cite{chlebek2016a}. 
+The importance density $q_{\tau}(\underline{x})$ is then calculated based on the predicted particle set via moment matching.
+
+The next step leverages the importance density $q_{\tau}(\underline{x})$ similar to \eqref{eq:importance_sampling} and
+combines it with the homotopy \eqref{eq:homtopy_importance_sampling} resulting in the interim posterior
+\begin{equation}
+    \tilde{f}^{e}(\underline{x}, \lambda_{\tau}) = c(\lambda)f^L(\underline{x})^{\lambda_{\tau}}\frac{f^p(\underline{x})}{q_{\tau}(\underline{x})}q_{\tau}(\underline{x}) \,.
+    \label{eq:posterior_interim_posterior}
+\end{equation}
+The predicted particles are also used to simplify the equation \eqref{eq:posterior_interim_posterior} by using a Dirac mixture for $q_{\tau}(\underline{x})$ with dirac components equal to the particles (see section \ref{ch:importance_sampling}).
+This leads to the final equation for the interim posterior $\tilde{f}^{e}(\underline{x}, \lambda_{\tau})$
+\begin{equation}
+    \tilde{f}^{e}(\underline{x}, \lambda_{\tau}) = c(\lambda) \sum_{i=1}^{L}w^{(i)}f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,.
+    \label{eq:posterior_interim_posterior2}
+\end{equation}
+Lastly, the weights are being updated according to
+\begin{equation}
+    \hat{w}^{(i)}= f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,,
+    \label{eq:posterior_update_weights}
+\end{equation}
+and their normalized weights $\bar{w}^{(i)}$ are calculated from the $\hat{w}^{(i)}$ \cite{chlebek2016a}.
+The procedure is repeated until the the final interim posterior $\tilde{f}^{e}(\underline{x}, \lambda=1)$ is reached which is the desired posterior $\tilde{f}(\underline{x})$.
+
 Sources:
 \cite{chen2003}
 % Literaturverzeichnis in Literatur.bib
