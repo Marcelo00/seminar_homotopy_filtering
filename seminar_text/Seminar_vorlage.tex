@@ -1,0 +1,232 @@
+\documentclass[a4paper]{IEEEtran}
+
+% Ein paar hilfreiche Pakete
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+% Nummeriere Formel nur, wenn sie auch referenziert wird
+\mathtoolsset{showonlyrefs}
+
+% Header
+\markboth{Seminar SS 2020 Moderne Methoden der Informationsverarbeitung}{}
+
+% Hier den Titel des eigenen Seminars eintragen
+\title{Thema des Seminars}
+
+% Hier deinen eigenen Namen
+\author{Vorname~Nachname}
+
+
+\begin{document}
+
+% Erzeugt die Überschrift
+\maketitle
+
+% Zusammenfassung
+\begin{abstract}
+Die Ausarbeitung beginnt mit einer kurzen Zusammenfassung.
+\end{abstract}
+
+% Erster Abschnitt
+\section{Introduction}
+
+Hier beginnt der Text...
+
+\section{Ein paar Hinweise}
+
+Vor eine Subsection gehören immer noch ein paar einleitende Worte!
+
+\subsection{Absätze, etc.}
+
+Ein neuer Absatz sollte nicht durch einen Zeilenumbruchs-Befehl, sondern durch eine Leerzeile im Code erzeugt werden.
+
+Das hier ist richtig.
+\\ Das hier nicht.
+
+\subsection{Formeln}
+
+So können Formeln gesetzt und referenziert werden:
+\begin{equation}
+    a = b + c \,.
+    \label{eq:name}
+\end{equation}
+Laut \eqref{eq:name} ist $a=b+c$. Formeln sind Teil des Fließtextes und sollten deshalb korrekt mit Punkten und Kommata interpunktiert werden.  Das \texttt{\textbackslash,} fügt dabei einen kleinen Abstand zwischen Formel und Interpunktion ein.
+
+Mehrzeiliger Formelsatz mit der \emph{split} Umgebung innerhalb der \emph{equation} Umgebung:
+\begin{equation}
+    \begin{split}
+        % \\ für Zeilenumbruch
+        % an & wird ausgerichtet
+        a      &= b + c \,, \\
+        a_{ij} &= b_{ij} + c_{ij} \,.
+    \end{split}
+\end{equation}
+
+Funktionen sollen in Formeln \emph{nicht} mit mathematischer Schrift gesetzt werden.
+Dazu gibt es in LaTeX für fast alle Funktionen schon Makros, z.B. 
+\begin{align}
+    y = \sin(x)\,,
+\end{align}
+nicht 
+\begin{align}
+    y = sin(x)
+\end{align}
+benutzen. Für nicht vorhandene Funktionen kann \emph{operatorname} eingesetzt werden:
+\begin{equation}
+    y = \operatorname{spur}(X) \,.
+\end{equation}
+
+\subsection{Bilder}
+
+So werden Bilder eingebunden (als pdf, jpg oder png):
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.48\textwidth]{Bild.png}
+    \caption{Hier kommen weitere Erklärungen zum Bild.}
+    \label{fig:bild}
+\end{figure}
+
+Auf diese Abbildung wird dann mit Abb. \ref{fig:bild} verwiesen.
+
+\subsection{Zitate}
+
+Immer korrekt zitieren \cite{yaakov_bar-shalom_estimation_2001}!
+
+\subsection{LaTeX Hilfe}
+
+Diese Website ist sehr nützlich:
+
+\url{http://en.wikibooks.org/wiki/LaTeX}
+
+\section{Zusammenfassung und Ausblick}
+
+
+\begin{enumerate}
+    \item State estimation in dynamic systems (e.g in robotic )
+    \begin{enumerate}
+        \item context about what estimation is wrt. to a system
+        \item state is not directly observable and we need measurement in order to estimate the state
+        \item noisy measurements
+        \item linear and non-linear systems (e.g. Kalman Filter in linear case and Unscented Kalman Filter in non-linear)
+    \end{enumerate}
+    \item prediction and filtering steps in the estimation
+    \item problems in estimation
+    \begin{enumerate}
+        \item closed form representation of the desired density function are most often not possible 
+        (in non-linear case) $\rightarrow$ approximation of probability density
+        \item storing all information and propagate it every time step is computational expensive $\rightarrow$ progressive
+    \end{enumerate}
+    \item Short overview of different methods that focuses on non-linear dynamic systems (state of the art)
+    \begin{enumerate}
+        \item Methods using ODE (track true density via ODE)
+        \item Other methods
+    \end{enumerate} 
+    \item Give an outlook on the seminar objective (not quite sure). Either one ODE method and one other non-linear filter method
+    or a different ODE methods
+\end{enumerate}
+Sources:
+\cite{hanebeck2003}
+\cite{huber2008a}
+\cite{daum2005}
+\cite{hagmar2011}
+
+\begin{itemize}
+    \item system and measurment quations (nonlinear mapping)
+    \item specification of noise $\rightarrow$ white noise 
+    \item First order markov process $$p(x_{k} \vert x_{0:k-1}) = p(x_{k} \vert x_{k-1})$$
+    with $x_{0:k-1} := \{x_{0}, x_{1}, \dots, x_{k-1}\}$ 
+    \item the general estimation process has two steps
+    \begin{itemize}
+        \item prediction or time update $\rightarrow$ prior probability density $p(x_{k+1} \vert y_{0:k}, u_{0:k})$
+        \item filtering step or measurement update $\rightarrow$ posterior probability density $p(x_{k+1} \vert y_{0:k+1}, u_{0:k})$
+        \item How are they computed and what does they mean
+    \end{itemize}
+    \item Progressive bayes
+\end{itemize}
+System and measurment equation:
+\begin{equation}
+    \begin{split}
+        % \\ für Zeilenumbruch
+        % an & wird ausgerichtet
+        x_{k+1}  &= a_{k}(x_{k}, u_{k}, w_{k}) \,, \\
+        y_{k}    &= h_{k}(x_{k}, v_{k}) \,.
+    \end{split}
+\end{equation}
+Connection between prediction and filtering in sense of Bayes Theorem
+\begin{equation}
+    p(x_{k+1} \vert y_{0:k+1}, u_{0:k}) =  \frac{p(y_{k} \vert x_{k})p(x_{k+1} \vert y_{0:k}, u_{0:k})}{p(y_{k+1} \vert y_{0:k})}\,, \\
+\end{equation}
+
+\begin{equation}
+    \begin{split}
+        p(\underline{x}_{k+1} \vert \underline{Y}_{k+1}) &= p(\underline{x}_{k+1} \vert \underline{Y}_{k}, \underline{y}_{k+1}) \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1}, \underline{Y}_{k})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \\
+        &= \dfrac{p(\underline{y}_{k+1} \vert \underline{x}_{k+1}) p(\underline{x}_{k+1} \vert \underline{Y}_{k})}{p(\underline{y}_{k+1} \vert \underline{Y}_{k})} \,.  
+        \label{eq:posterior_gen_density}
+    \end{split}
+\end{equation}
+
+The homotopy used in the procedure \cite{chlebek2016a} is given in \eqref{eq:homtopy_importance_sampling} and is similar to \eqref{eq:homotopy_equation} except the additional normalization constant $c(\lambda)$.
+Furthermore, the main assumption for this approach is that $\tilde{f}^{e}(\underline{x})$, $f^{p}(\underline{x})$ and the importance density $q_{\tau}(\underline{x})$ are Gaussian densities.
+
+\begin{equation}
+    \tilde{f^e}(\underline{x},\lambda) = c(\lambda)f^p(\underline{x})f^L(\underline{x})^{\lambda} \,.
+    \label{eq:homtopy_importance_sampling}
+\end{equation}
+
+The first step is primarily aimed to create an importance density which is then used to update the weights of the particles in the second step.
+In order to derive the importance density for the $\tau \textsuperscript{th}$ progression step, the first objective is to predict the displacement of the particle set $\,\, \begin{bmatrix} \underline{x}_{\tau+1}^{(1)}, \dotsc, \underline{x}_{\tau+1}^{(L)} \end{bmatrix}$ which is caused during the progression.
+The following equation delivers the desired particle set \cite{chlebek2016a}:
+\begin{equation}
+    \underline{x}_{\tau + 1}^{(i)} = \textbf{F}_{\tau}
+        \begin{bmatrix}
+            \underline{x}_{\tau}^{(i)} \\ 
+            \underline{x}_{\tau -1}^{(i)}
+        \end{bmatrix} \,,
+\end{equation}
+with F being a transition matrix that adjusts the particles $\underline{x}_{\tau}^{(i)}$ and $\underline{x}_{\tau-1}^{(i)}$ via coefficients $T = \frac{\Delta\lambda_{\tau}}{\Delta\lambda_{\tau-1}}$\cite{chlebek2016a}.
+These particles are obtained from the Dirac mixture approximation of the respective interim posterior densities $\tilde{f}^{e}(\underline{x}, \lambda)$.
+An approximation for a specific $\tau$-th progression step is given by
+ \begin{equation}
+    f^{e}(\underline{x}, \lambda_{\tau}) = \sum_{i=1}^{L}w^{(i)}\delta(\underline{x}-\underline{x}_{\tau}^{(i)}) \,,
+    \label{eq:dirac_approx_interim_posterior}
+ \end{equation}
+including equally weighted weights.
+Furthermore, the particles for calculating $\underline{x}_{\tau + 1}^{(i)}$ are selected in such way that minimizes the second-order Wasserstein distance between  $f^{e}(\underline{x}, \lambda_{\tau})$ and $f^{e}(\underline{x}, \lambda_{\tau-1})$ \cite{chlebek2016a}. 
+The importance density $q_{\tau}(\underline{x})$ is then calculated based on the predicted particle set via moment matching.
+
+The next step leverages the importance density $q_{\tau}(\underline{x})$ similar to \eqref{eq:importance_sampling} and
+combines it with the homotopy \eqref{eq:homtopy_importance_sampling} resulting in the interim posterior
+\begin{equation}
+    \tilde{f}^{e}(\underline{x}, \lambda_{\tau}) = c(\lambda)f^L(\underline{x})^{\lambda_{\tau}}\frac{f^p(\underline{x})}{q_{\tau}(\underline{x})}q_{\tau}(\underline{x}) \,.
+    \label{eq:posterior_interim_posterior}
+\end{equation}
+The predicted particles are also used to simplify the equation \eqref{eq:posterior_interim_posterior} by using a Dirac mixture for $q_{\tau}(\underline{x})$ with dirac components equal to the particles (see section \ref{ch:importance_sampling}).
+This leads to the final equation for the interim posterior $\tilde{f}^{e}(\underline{x}, \lambda_{\tau})$
+\begin{equation}
+    \tilde{f}^{e}(\underline{x}, \lambda_{\tau}) = c(\lambda) \sum_{i=1}^{L}w^{(i)}f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,.
+    \label{eq:posterior_interim_posterior2}
+\end{equation}
+Lastly, the weights are being updated according to
+\begin{equation}
+    \hat{w}^{(i)}= f^L(\underline{x}^{(i)})^{\lambda_{\tau}}\frac{f^p(\underline{x}^{(i)})}{q_{\tau}(\underline{x}^{(i)})} \,,
+    \label{eq:posterior_update_weights}
+\end{equation}
+and their normalized weights $\bar{w}^{(i)}$ are calculated from the $\hat{w}^{(i)}$ \cite{chlebek2016a}.
+The procedure is repeated until the the final interim posterior $\tilde{f}^{e}(\underline{x}, \lambda=1)$ is reached which is the desired posterior $\tilde{f}(\underline{x})$.
+
+Sources:
+\cite{chen2003}
+% Literaturverzeichnis in Literatur.bib
+% (z.B. per Hand oder mit Zotero, Jabref, etc. editieren) 
+\bibliographystyle{plain}
+\bibliography{Literatur}
+\end{document}
